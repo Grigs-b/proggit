@@ -7,8 +7,8 @@ import (
     "strings"
     "math/rand"
     "bufio"
-    "github.com/Grigs-b/proggit/198/go/words"
-    "github.com/Grigs-b/proggit/198/go/player"
+    "github.com/Grigs-b/proggit/198/words"
+    "github.com/Grigs-b/proggit/198/player"
 )
 
 const ROUNDS int = 5

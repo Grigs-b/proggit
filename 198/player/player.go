@@ -6,7 +6,7 @@ import (
     "strings"
     "math/rand"
     "fmt"
-    "github.com/Grigs-b/proggit/198/go/words"
+    "github.com/Grigs-b/proggit/198/words"
 )
 
 const HAND_SIZE int = 12
