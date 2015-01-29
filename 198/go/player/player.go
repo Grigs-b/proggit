@@ -39,7 +39,7 @@ type AIPlayer struct {
 }
 
 type EasyAIPlayer struct {
-	AIPlayer
+    AIPlayer
 }
 
 type MediumAIPlayer struct {
@@ -52,15 +52,15 @@ type HardAIPlayer struct {
 
 
 func (p *AnyPlayer) GetScore() int {
-	return p.Score
+    return p.Score
 }
 
 func (p *AnyPlayer) AddPoints(points int) {
-	p.Score += points
+    p.Score += points
 }
 
 func (p *AnyPlayer) GetHand() []rune {
-	return p.Hand
+    return p.Hand
 }
 
 func (p *AnyPlayer) GetName() string {
@@ -131,15 +131,15 @@ func (ai *HardAIPlayer) Play() string {
 
 // TODO: duplicative of code in main
 func (human HumanPlayer) ReadIO() string {
-	reader := bufio.NewReader(os.Stdin)
+    reader := bufio.NewReader(os.Stdin)
     fmt.Print("Enter word: ")
     text, _ := reader.ReadString('\n')
-	return strings.TrimSpace(text)
+    return strings.TrimSpace(text)
 }
 
 func (human *HumanPlayer) Play() string {
-	result := ""
-	for {
+    result := ""
+    for {
         result = human.ReadIO()
         if strings.EqualFold(result, "-1") {
             //escape for if you can't spell a word, temporary until I find a better solution
@@ -154,8 +154,8 @@ func (human *HumanPlayer) Play() string {
             break
         }
 
-	}
-	return result
+    }
+    return result
 }
 
 func (p *AnyPlayer) CheckLettersVsHand(word string) bool {
@@ -169,7 +169,7 @@ func (p *AnyPlayer) CheckLettersVsHand(word string) bool {
                 break
             }
         }
-        if index >= 0{
+        if index >= 0 {
             hand = append(hand[:index], hand[index+1:]...)
         } else {
             return false
