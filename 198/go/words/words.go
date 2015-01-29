@@ -1,7 +1,6 @@
 package words
 
 import (
-    "fmt"
     "strings"
     "net/http"
     "bufio"
@@ -11,7 +10,7 @@ type WordList interface {
     IsValid(word string) bool
     ScoreWords(wordOne string, wordTwo string) int
     PossibleWords(letters []string) []string
-    //SetDictionary([]string)
+    SetDictionary([]string)
 }
 
 type Words struct {
@@ -38,11 +37,13 @@ func Init() *Words {
     return w
 }
 
-/*
-func (w Words) SetDictionary(words []string) {
 
+func (w *Words) SetDictionary(words []string) {
+    for _, word := range words {
+        w.dictionary[word]=true
+    }
 }
-*/
+
 
 func (w Words) IsValid(word string) bool {
     if w.dictionary[word] {
@@ -67,40 +68,14 @@ func ScoreWords(wordOne string, wordTwo string) int {
 }
 
 
+// TODO: Need to store words from list in a tree based structure that has at each node
+// a letter and a bool signifying whether that node represents a complete word
+// PossibleWords can then check for word validity using this
 
+
+// Should use channel to prevent possibly exploding stack
 func (w *Words) PossibleWords(letters []rune) []string {
-    var words, result []string
-    for pos, letter := range letters {
-        var temp = make([]rune, len(letters))
-        var start = make([]rune, 1)
-        copy(temp, letters)
-        start[0] = letter
-        remainder := append(temp[:pos], temp[pos+1:]...)
-        result = append(result, w.findwords(start, remainder, words)...)
-    }
+    var result []string
+
     return result
-}
-
-//TODO: Refactor to use channel for memory safety, also get working
-func (w *Words) findwords(check []rune, letters []rune, words []string) []string{
-
-    if len(letters) == 0 {
-        return words
-    }
-
-    for index, letter := range(letters) {
-        possible := append(check, letter)
-        fmt.Println("Checking", string(possible))
-        if w.IsValid(string(check)) {
-            fmt.Println("Valid word found", string(possible))
-            words = append(words, string(possible))
-
-        }
-        left := append(letters[:index], letters[index+1:]...)
-        return w.findwords(possible, left, words)
-    }
-
-    check = append(check, letters[0])
-    return w.findwords(check, letters[1:], words)
-
 }
