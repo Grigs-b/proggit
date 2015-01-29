@@ -140,8 +140,8 @@ func (human HumanPlayer) ReadIO() string {
 func (human *HumanPlayer) Play() string {
 	result := ""
 	for {
-		result = human.ReadIO()
-		if strings.EqualFold(result, "-1") {
+        result = human.ReadIO()
+        if strings.EqualFold(result, "-1") {
             //escape for if you can't spell a word, temporary until I find a better solution
             fmt.Printf("%s couldn't spell a word!\n", human.GetName())
             result = ""
@@ -173,8 +173,8 @@ func (p *AnyPlayer) CheckLettersVsHand(word string) bool {
             hand = append(hand[:index], hand[index+1:]...)
         } else {
             return false
-	    }
+        }
     }
     p.Hand = hand
-	return true
+    return true
 }

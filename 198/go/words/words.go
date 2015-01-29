@@ -21,7 +21,7 @@ type Words struct {
 var Wordlist = Init()
 
 func Init() *Words {
-    // Pull the wordlist from a know location
+    // Pull the wordlist from a known location
     // TODO: Move magic string to configuration
     // TODO: Error handling if Init is not called before other functions
     w := new(Words)
@@ -37,11 +37,13 @@ func Init() *Words {
     w.dictionary = words
     return w
 }
+
 /*
 func (w Words) SetDictionary(words []string) {
 
 }
 */
+
 func (w Words) IsValid(word string) bool {
     if w.dictionary[word] {
         return true
@@ -58,7 +60,6 @@ func ScoreWords(wordOne string, wordTwo string) int {
             if indexTwo := strings.IndexRune(wordTwo, arune); indexTwo > -1 {
                 wordOne = strings.Replace(wordOne, string(arune), "", 1)
                 wordTwo = strings.Replace(wordTwo, string(arune), "", 1)
-                //fmt.Println(wordOne, wordTwo)
             }
         }
     }
