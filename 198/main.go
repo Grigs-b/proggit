@@ -14,7 +14,6 @@ import (
 const ROUNDS int = 5
 
 
-
 // TODO: What to do if your hand has no vowels
 // TODO: Change WaitFor to use validator function to remove duplication
 func WaitForValidWord(p player.Player) string{

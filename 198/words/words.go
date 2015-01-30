@@ -1,8 +1,9 @@
 package words
 
 import (
+    "io"
+    "os"
     "strings"
-    "net/http"
     "bufio"
 )
 
@@ -19,19 +20,38 @@ type Words struct {
 
 var Wordlist = Init()
 
+// readLines reads a whole file into memory
+// and returns a slice of its lines.
+
+
 func Init() *Words {
+
     // Pull the wordlist from a known location
     // TODO: Move magic string to configuration
-    // TODO: Error handling if Init is not called before other functions
-    w := new(Words)
-    resp, _ := http.Get("http://www.joereynoldsaudio.com/enable1.txt")
-    defer resp.Body.Close()
+    // TODO: Refactor this whole module
 
+    w := new(Words)
+    // Changed to reading local file because remote host was going very slowly
+    path := "data/wordset.txt"
     words := make(map[string]bool)
-    scanner := bufio.NewScanner(resp.Body)
-    for scanner.Scan() {
-        token := scanner.Text()
-        words[token]=true
+
+    // open input file
+    file, err := os.Open(path)
+    if err != nil {
+        panic(err)
+    }
+    defer file.Close()
+    reader := bufio.NewReader(file)
+    for {
+        line, err := reader.ReadString('\n')
+        line = strings.TrimSpace(line)
+        if err != nil && err != io.EOF {
+            panic(err)
+        }
+        words[line] = true
+        if err == io.EOF {
+            break
+        }
     }
     w.dictionary = words
     return w
