@@ -4,7 +4,7 @@
 Started these as for a challenge and to improve my coding in various languages
 
 ## Current Projects
-1. [Words with Enemies](https://github.com/Grigs-b/proggit/tree/master/198/go)
+1. [Words with Enemies](https://github.com/Grigs-b/proggit/tree/master/198)
     - Written in Go
     - Human v. Human v1.0
     - Bot support coming
