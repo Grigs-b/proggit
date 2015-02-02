@@ -27,6 +27,7 @@ type AnyPlayer struct {
     Score   int
     Hand    []rune
     Name    string
+    Words   words.WordList
 }
 
 type HumanPlayer struct {
@@ -88,10 +89,10 @@ func (p *AIPlayer) GetName() string {
     return "Computer"
 }
 
-// TODO: Decouple the wordlist
+// TODO: Add Sortby length to possible words to make choosing shortest/longest/etc easier
 func (ai *EasyAIPlayer) Play() string {
     choice := ""
-    possible := words.Wordlist.PossibleWords(ai.Hand)
+    possible := ai.Words.PossibleWords(ai.Hand)
     if len(possible) > 0 {
         choice = possible[0]
         for _, word := range possible {
@@ -100,23 +101,25 @@ func (ai *EasyAIPlayer) Play() string {
             }
         }
     }
+    ai.UpdateHand(choice)
     return choice
 }
 
 // TODO: Make Medium choose a normal distribution from sorted.length rather than random
 func (ai *MediumAIPlayer) Play() string {
     choice := ""
-    possible := words.Wordlist.PossibleWords(ai.Hand)
+    possible := ai.Words.PossibleWords(ai.Hand)
     if len(possible) > 0 {
         val := rand.Intn(len(possible))
         choice = possible[val]
     }
+    ai.UpdateHand(choice)
     return choice
 }
 
 func (ai *HardAIPlayer) Play() string {
     choice := ""
-    possible := words.Wordlist.PossibleWords(ai.Hand)
+    possible := ai.Words.PossibleWords(ai.Hand)
     if len(possible) > 0 {
         choice = possible[0]
         for _, word := range possible {
@@ -125,6 +128,7 @@ func (ai *HardAIPlayer) Play() string {
             }
         }
     }
+    ai.UpdateHand(choice)
     return choice
 }
 
@@ -141,14 +145,15 @@ func (human *HumanPlayer) Play() string {
     result := ""
     for {
         result = human.ReadIO()
+        result = strings.ToLower(result)
         if strings.EqualFold(result, "-1") {
             //escape for if you can't spell a word, temporary until I find a better solution
             fmt.Printf("%s couldn't spell a word!\n", human.GetName())
             result = ""
             break
-        } else if !words.Wordlist.IsValid(result) {
+        } else if !human.Words.IsValid(result) {
             fmt.Printf("Word %s not found\n", result)
-        } else if !human.CheckLettersVsHand(result) {
+        } else if !human.UpdateHand(result) {
             fmt.Printf("Word %s contained characters not in your hand: %s\n", result, string(human.GetHand()))
         } else {
             break
@@ -158,7 +163,7 @@ func (human *HumanPlayer) Play() string {
     return result
 }
 
-func (p *AnyPlayer) CheckLettersVsHand(word string) bool {
+func (p *AnyPlayer) UpdateHand(word string) bool {
     hand := make([]rune, len(p.Hand))
     copy(hand, p.Hand)
     for _, letter := range word {

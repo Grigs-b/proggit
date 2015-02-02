@@ -14,18 +14,6 @@ import (
 const ROUNDS int = 5
 
 
-// TODO: What to do if your hand has no vowels
-// TODO: Change WaitFor to use validator function to remove duplication
-func WaitForValidWord(p player.Player) string{
-    result := ""
-    for {
-        // validate
-        if result = p.Play(); words.Wordlist.IsValid(result) {
-            break;
-        }
-    }
-    return result
-}
 
 func GetInput(showtext string) string {
     reader := bufio.NewReader(os.Stdin)
@@ -35,20 +23,20 @@ func GetInput(showtext string) string {
 }
 
 
-func WaitForValidOpponent() player.Player {
+func WaitForValidOpponent(wordset words.WordList) player.Player {
     for {
         t := GetInput("Enter your selection: ")
         fmt.Println("Selected", string(t))
         switch {
         case strings.EqualFold(t, "1"):
-            return new(player.EasyAIPlayer)
+            return &player.EasyAIPlayer{AIPlayer: player.AIPlayer{AnyPlayer: player.AnyPlayer{Name:"Easy",Words:wordset}}}
         case strings.EqualFold(t, "2"):
-            return new(player.MediumAIPlayer)
+            return &player.MediumAIPlayer{AIPlayer: player.AIPlayer{AnyPlayer: player.AnyPlayer{Name:"Medium",Words:wordset}}}
         case strings.EqualFold(t, "3"):
-            return new(player.HardAIPlayer)
+            return &player.HardAIPlayer{AIPlayer: player.AIPlayer{AnyPlayer: player.AnyPlayer{Name:"Hard",Words:wordset}}}
         case strings.EqualFold(t, "4"):
             p2 := GetInput("Player2 enter your name: ")
-            return &player.HumanPlayer{AnyPlayer: player.AnyPlayer{Name:p2}}
+            return &player.HumanPlayer{AnyPlayer: player.AnyPlayer{Name:p2,Words:wordset}}
         default:
             fmt.Println("Invalid Choice, Select 1-4\n")
         }
@@ -85,7 +73,7 @@ func PlayRound(round int, p1 player.Player, p2 player.Player) {
         break
     case score < 0 :
         winner = p2.GetName()
-        fmt.Printf("%s scores %d points\n", p2.GetName(), score)
+        fmt.Printf("%s scores %d points\n", p2.GetName(), -score)
         p2.AddPoints(-score)
         break
     }
@@ -95,6 +83,8 @@ func PlayRound(round int, p1 player.Player, p2 player.Player) {
 }
 
 func main() {
+    var wordset = words.NewWordset()
+    wordset.LoadWordsFromFile("data/wordset.txt")
     //Production:
     rand.Seed(time.Now().UTC().UnixNano())
     //Testing
@@ -109,8 +99,8 @@ func main() {
     fmt.Println("4: Human")
 
 
-    player1 := &player.HumanPlayer{AnyPlayer: player.AnyPlayer{Name:p1name}}
-    player2 := WaitForValidOpponent()
+    player1 := &player.HumanPlayer{AnyPlayer: player.AnyPlayer{Name:p1name, Words:wordset}}
+    player2 := WaitForValidOpponent(wordset)
 
     for round := 0; round < ROUNDS; round++ {
         PlayRound(round, player1, player2)

@@ -9,32 +9,21 @@ import (
 
 type WordList interface {
     IsValid(word string) bool
-    ScoreWords(wordOne string, wordTwo string) int
-    PossibleWords(letters []string) []string
-    SetDictionary([]string)
+    PossibleWords(letters []rune) []string
+    AddWord(string)
 }
 
-type Words struct {
+type Wordset struct {
     dictionary map[string]bool
 }
 
-var Wordlist = Init()
+func NewWordset() *Wordset {
+    return &Wordset{dictionary: make(map[string]bool)}
+}
 
-// readLines reads a whole file into memory
-// and returns a slice of its lines.
+func (w *Wordset) LoadWordsFromFile(path string) {
 
-
-func Init() *Words {
-
-    // Pull the wordlist from a known location
-    // TODO: Move magic string to configuration
-    // TODO: Refactor this whole module
-
-    w := new(Words)
     // Changed to reading local file because remote host was going very slowly
-    path := "data/wordset.txt"
-    words := make(map[string]bool)
-
     // open input file
     file, err := os.Open(path)
     if err != nil {
@@ -45,31 +34,45 @@ func Init() *Words {
     for {
         line, err := reader.ReadString('\n')
         line = strings.TrimSpace(line)
+        line = strings.ToLower(line)
         if err != nil && err != io.EOF {
             panic(err)
         }
-        words[line] = true
+        w.AddWord(line)
         if err == io.EOF {
             break
         }
     }
-    w.dictionary = words
-    return w
 }
 
 
-func (w *Words) SetDictionary(words []string) {
-    for _, word := range words {
-        w.dictionary[word]=true
-    }
+func (w *Wordset) AddWord(word string) {
+    w.dictionary[word]=true
 }
 
 
-func (w Words) IsValid(word string) bool {
+func (w Wordset) IsValid(word string) bool {
     if w.dictionary[word] {
         return true
     }
     return false
+}
+
+
+func (w *Wordset) PossibleWords(letters []rune) []string {
+    var result []string
+    var tmp string
+    for word, _ := range w.dictionary {
+        tmp = word
+        for _, letter := range letters {
+            tmp = strings.Replace(tmp, string(letter), "", 1)
+            if len(tmp) == 0 {
+                result = append(result, word)
+                break
+            }
+        }
+    }
+    return result
 }
 
 
@@ -85,17 +88,4 @@ func ScoreWords(wordOne string, wordTwo string) int {
         }
     }
     return len(wordOne) - len(wordTwo)
-}
-
-
-// TODO: Need to store words from list in a tree based structure that has at each node
-// a letter and a bool signifying whether that node represents a complete word
-// PossibleWords can then check for word validity using this
-
-
-// Should use channel to prevent possibly exploding stack
-func (w *Words) PossibleWords(letters []rune) []string {
-    var result []string
-
-    return result
 }

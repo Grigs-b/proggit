@@ -1,6 +1,10 @@
 package main
 
 import (
-    "reflect"
+    //"reflect"
     "testing"
 )
+
+func TestStub(t *testing.T) {
+
+}
