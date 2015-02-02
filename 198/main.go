@@ -108,8 +108,10 @@ func main() {
     fmt.Printf("Final Score - %s: %d - %s: %d \n", player1.GetName(), player1.GetScore(), player2.GetName(), player2.GetScore())
     if player1.GetScore() > player2.GetScore() {
         fmt.Printf("%s wins!", player1.GetName())
-    } else {
+    } else if player1.GetScore() < player2.GetScore() {
         fmt.Printf("%s wins!", player2.GetName())
+    } else {
+        fmt.Printf("It's a draw!")
     }
     fmt.Println("")
 }
