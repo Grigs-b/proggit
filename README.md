@@ -1,7 +1,7 @@
 # Proggit Projects
 (soon to be) Collection of personal projects. Based on the projects that can be found at [/r/dailyprogrammer](http://www.reddit.com/r/dailyprogrammer).
 
-Started these as for a challenge and to improve my coding in various languages
+Started these for a challenge and to improve my coding in various languages
 
 ## Current Projects
 1. [Words with Enemies](https://github.com/Grigs-b/proggit/tree/master/198)
