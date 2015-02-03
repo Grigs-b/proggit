@@ -114,18 +114,20 @@ func TestPossibleWordsNonePossibleReturnsEmptyList(t *testing.T) {
         t.Errorf("PossibleWords(%s) = %+v, want %+v", hand, result, want)
     }
 }
-
+//Runs: 126435556 ns/op, 145709640 ns/op, 127772211 ns/op
+// Dictionary size: 172820
+// ~740ns per word in dictionary
 func BenchmarkPossibleWords(b *testing.B) {
     w := NewWordset()
     w.LoadWordsFromFile("../data/wordset.txt")
     hand := []rune{'a', 'b', 'c','d', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l'}
     done := make(chan struct{})
-    var result []string
     b.ResetTimer()
     for i := 0; i < b.N; i++ {
-        for entry := range w.PossibleWords(done, hand) {
-            result = append(result, entry)
+        var compiled []string
+        for result := range w.PossibleWords(done, hand) {
+            compiled = append(compiled, result)
         }
-        fmt.Println(result)
+        fmt.Println(len(compiled))
     }
 }
