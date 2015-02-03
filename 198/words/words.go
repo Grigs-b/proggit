@@ -3,22 +3,24 @@ package words
 import (
     "io"
     "os"
+    "sync"
     "strings"
     "bufio"
 )
 
 type WordList interface {
     IsValid(word string) bool
-    PossibleWords(letters []rune) []string
+    PossibleWords(done <-chan struct{}, letters []rune) <-chan string
     AddWord(string)
 }
 
 type Wordset struct {
-    dictionary map[string]bool
+    dictionary  map[string]bool
+    bylength    map[int][]string
 }
 
 func NewWordset() *Wordset {
-    return &Wordset{dictionary: make(map[string]bool)}
+    return &Wordset{dictionary: make(map[string]bool), bylength: make(map[int][]string)}
 }
 
 func (w *Wordset) LoadWordsFromFile(path string) {
@@ -48,30 +50,96 @@ func (w *Wordset) LoadWordsFromFile(path string) {
 
 func (w *Wordset) AddWord(word string) {
     w.dictionary[word]=true
+    w.bylength[len(word)] = append(w.bylength[len(word)], word)
 }
 
 
 func (w Wordset) IsValid(word string) bool {
-    if w.dictionary[word] {
-        return true
+    return w.dictionary[word]
+}
+
+func check(word string, letters []rune) bool {
+    var tmp = word
+    for _, letter := range letters {
+        tmp = strings.Replace(tmp, string(letter), "", 1)
+        if len(tmp) == 0 {
+            return true
+        }
     }
     return false
 }
 
+func (w Wordset) checkbylength(done <-chan struct{}, length int, letters []rune) <-chan string {
+    result := make(chan string)
+    go func() {
+        defer close(result)
+        for _, word := range w.bylength[length] {
+            if check(word, letters) {
+                select {
+                case result <- word:
+                case <-done:
+                    return
+                }
+            }
+        }
 
-func (w *Wordset) PossibleWords(letters []rune) []string {
-    var result []string
-    var tmp string
-    for word, _ := range w.dictionary {
-        tmp = word
-        for _, letter := range letters {
-            tmp = strings.Replace(tmp, string(letter), "", 1)
-            if len(tmp) == 0 {
-                result = append(result, word)
-                break
+    }()
+
+    return result
+}
+
+func merge(done <-chan struct{}, checks ...<-chan string) <-chan string {
+    var wg sync.WaitGroup
+    out := make(chan string)
+
+    // Start an output goroutine for each input channel
+    output := func(c <-chan string) {
+        defer wg.Done()
+        for n := range c {
+            select {
+            case out <- n:
+            case <-done:
+                return
             }
         }
     }
+    // Set the number of goroutines we're adding
+    wg.Add(len(checks))
+    for _, check := range checks {
+        go output(check)
+    }
+
+    // Close once all the output goroutines are done
+    go func() {
+        wg.Wait()
+        close(out)
+    }()
+    return out
+}
+
+func (w *Wordset) PossibleWords(done <-chan struct{}, letters []rune) <-chan string {
+
+    result := make(chan string)
+    go func() {
+        defer close(result)
+        // create a handler function for each length word we'd like to check
+        // dont have any 0 or 1 length words, so skip those, giving us 2-12
+        // as indeces for our length checks, HANDLENGTH-1 total check functions
+        startPos := 2
+        checks := make([]<-chan string, len(letters)-1)
+        for i := startPos; i <= len(letters); i++ {
+            checks[i-startPos] = w.checkbylength(done, i, letters)
+        }
+
+        // Consume the merged output from all checks, handle
+        for n := range merge(done, checks...) {
+            select {
+            case result <- n:
+            case <-done:
+                return
+            }
+        }
+    }()
     return result
 }
 

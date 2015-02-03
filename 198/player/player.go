@@ -92,13 +92,15 @@ func (p *AIPlayer) GetName() string {
 // TODO: Add Sortby length to possible words to make choosing shortest/longest/etc easier
 func (ai *EasyAIPlayer) Play() string {
     choice := ""
-    possible := ai.Words.PossibleWords(ai.Hand)
-    if len(possible) > 0 {
-        choice = possible[0]
-        for _, word := range possible {
-            if len(word) < len(choice) {
-                choice = word
-            }
+    done := make(chan struct{})
+    defer close(done)
+    i := 0
+    for possible := range ai.Words.PossibleWords(done, ai.Hand) {
+        if i == 0 {
+            choice = possible
+        }
+        if len(possible) < len(choice) {
+            choice = possible
         }
     }
     ai.UpdateHand(choice)
@@ -107,25 +109,31 @@ func (ai *EasyAIPlayer) Play() string {
 
 // TODO: Make Medium choose a normal distribution from sorted.length rather than random
 func (ai *MediumAIPlayer) Play() string {
+
+    done := make(chan struct{})
+    defer close(done)
+    var compiled []string
     choice := ""
-    possible := ai.Words.PossibleWords(ai.Hand)
-    if len(possible) > 0 {
-        val := rand.Intn(len(possible))
-        choice = possible[val]
+    for possible := range ai.Words.PossibleWords(done, ai.Hand) {
+        compiled = append(compiled, possible)
+    }
+
+    if len(compiled) > 0 {
+        val := rand.Intn(len(compiled))
+        choice = compiled[val]
     }
     ai.UpdateHand(choice)
     return choice
 }
 
 func (ai *HardAIPlayer) Play() string {
+
+    done := make(chan struct{})
+    defer close(done)
     choice := ""
-    possible := ai.Words.PossibleWords(ai.Hand)
-    if len(possible) > 0 {
-        choice = possible[0]
-        for _, word := range possible {
-            if len(word) > len(choice) {
-                choice = word
-            }
+    for possible := range ai.Words.PossibleWords(done, ai.Hand) {
+        if len(possible) > len(choice) {
+            choice = possible
         }
     }
     ai.UpdateHand(choice)

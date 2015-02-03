@@ -1,6 +1,7 @@
 package words
 
 import (
+    "fmt"
     "reflect"
     "testing"
 )
@@ -66,20 +67,24 @@ func TestWordlistWordDoesntExistReturnsFalse(t *testing.T) {
 
 func TestPossibleWordsFindsCorrectSetGoldenPath(t *testing.T) {
     want := []string{"cab", "back"}
-
+    var result []string
     w := NewWordset()
     w.AddWord("cab")
     w.AddWord("truth")
     w.AddWord("back")
     w.AddWord("front")
     hand := []rune{'a', 'b', 'c','k'}
-    if result := w.PossibleWords(hand); !reflect.DeepEqual(result, want) {
+    done := make(chan struct{})
+    for entry := range w.PossibleWords(done, hand) {
+        result = append(result, entry)
+    }
+    if !reflect.DeepEqual(result, want) {
         t.Errorf("PossibleWords(%s) = %+v, want %+v", hand, result, want)
     }
 }
 
 func TestPossibleWordsMultipleLettersDontCount(t *testing.T) {
-    var want []string
+    var want, result []string
 
     w := NewWordset()
     w.AddWord("cab")
@@ -87,17 +92,40 @@ func TestPossibleWordsMultipleLettersDontCount(t *testing.T) {
     w.AddWord("back")
     w.AddWord("front")
     hand := []rune{'a', 'k', 'c','k'}
-    if result := w.PossibleWords(hand); !reflect.DeepEqual(result, want) {
+    done := make(chan struct{})
+    for entry := range w.PossibleWords(done, hand) {
+        result = append(result, entry)
+    }
+    if !reflect.DeepEqual(result, want) {
         t.Errorf("PossibleWords(%s) = %+v, want %+v", hand, result, want)
     }
 }
 
 func TestPossibleWordsNonePossibleReturnsEmptyList(t *testing.T) {
-    var want []string
+    var want, result []string
 
     w := NewWordset()
     hand := []rune{'a', 'b', 'c','k'}
-    if result := w.PossibleWords(hand); !reflect.DeepEqual(result, want) {
+    done := make(chan struct{})
+    for entry := range w.PossibleWords(done, hand) {
+        result = append(result, entry)
+    }
+    if !reflect.DeepEqual(result, want) {
         t.Errorf("PossibleWords(%s) = %+v, want %+v", hand, result, want)
+    }
+}
+
+func BenchmarkPossibleWords(b *testing.B) {
+    w := NewWordset()
+    w.LoadWordsFromFile("../data/wordset.txt")
+    hand := []rune{'a', 'b', 'c','d', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l'}
+    done := make(chan struct{})
+    var result []string
+    b.ResetTimer()
+    for i := 0; i < b.N; i++ {
+        for entry := range w.PossibleWords(done, hand) {
+            result = append(result, entry)
+        }
+        fmt.Println(result)
     }
 }
