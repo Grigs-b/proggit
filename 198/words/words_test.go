@@ -1,6 +1,7 @@
 package words
 
 import (
+    "sort"
     "reflect"
     "testing"
 )
@@ -10,6 +11,24 @@ func TestEqualWordsTie(t *testing.T) {
     word := "because"
     if result := ScoreWords(word, word); !reflect.DeepEqual(result, want) {
         t.Errorf("scoreWords(%s, %s) = %+v, want %+v", word, word, result, want)
+    }
+}
+
+func TestPlayerOneEmptyPlayerTwoScoresFullLengthIsNegative(t *testing.T) {
+    want := -3
+    playerOne := ""
+    playerTwo := "win"
+    if result := ScoreWords(playerOne, playerTwo); !reflect.DeepEqual(result, want) {
+        t.Errorf("scoreWords(%s, %s) = %+v, want %+v", playerOne, playerTwo, result, want)
+    }
+}
+
+func TestPlayerTwoEmptyPlayerOneScoresFullLength(t *testing.T) {
+    want := 3
+    playerOne := "won"
+    playerTwo := ""
+    if result := ScoreWords(playerOne, playerTwo); !reflect.DeepEqual(result, want) {
+        t.Errorf("scoreWords(%s, %s) = %+v, want %+v", playerOne, playerTwo, result, want)
     }
 }
 
@@ -66,20 +85,25 @@ func TestWordlistWordDoesntExistReturnsFalse(t *testing.T) {
 
 func TestPossibleWordsFindsCorrectSetGoldenPath(t *testing.T) {
     want := []string{"cab", "back"}
-
+    var result []string
     w := NewWordset()
     w.AddWord("cab")
     w.AddWord("truth")
     w.AddWord("back")
     w.AddWord("front")
     hand := []rune{'a', 'b', 'c','k'}
-    if result := w.PossibleWords(hand); !reflect.DeepEqual(result, want) {
+    done := make(chan struct{})
+    for entry := range w.PossibleWords(done, hand) {
+        result = append(result, entry)
+    }
+    sort.Sort(ByLength(result))
+    if !reflect.DeepEqual(result, want) {
         t.Errorf("PossibleWords(%s) = %+v, want %+v", hand, result, want)
     }
 }
 
 func TestPossibleWordsMultipleLettersDontCount(t *testing.T) {
-    var want []string
+    var want, result []string
 
     w := NewWordset()
     w.AddWord("cab")
@@ -87,17 +111,40 @@ func TestPossibleWordsMultipleLettersDontCount(t *testing.T) {
     w.AddWord("back")
     w.AddWord("front")
     hand := []rune{'a', 'k', 'c','k'}
-    if result := w.PossibleWords(hand); !reflect.DeepEqual(result, want) {
+    done := make(chan struct{})
+    for entry := range w.PossibleWords(done, hand) {
+        result = append(result, entry)
+    }
+    if !reflect.DeepEqual(result, want) {
         t.Errorf("PossibleWords(%s) = %+v, want %+v", hand, result, want)
     }
 }
 
 func TestPossibleWordsNonePossibleReturnsEmptyList(t *testing.T) {
-    var want []string
+    var want, result []string
 
     w := NewWordset()
     hand := []rune{'a', 'b', 'c','k'}
-    if result := w.PossibleWords(hand); !reflect.DeepEqual(result, want) {
+    done := make(chan struct{})
+    for entry := range w.PossibleWords(done, hand) {
+        result = append(result, entry)
+    }
+    if !reflect.DeepEqual(result, want) {
         t.Errorf("PossibleWords(%s) = %+v, want %+v", hand, result, want)
+    }
+}
+
+// Easy optimization possible, check "checkbylength" function for explaination
+func BenchmarkPossibleWords(b *testing.B) {
+    w := NewWordset()
+    w.LoadWordsFromFile("../data/wordset.txt")
+    hand := []rune{'a', 'b', 'c','d', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l'}
+    done := make(chan struct{})
+    b.ResetTimer()
+    for i := 0; i < b.N; i++ {
+        var compiled []string
+        for result := range w.PossibleWords(done, hand) {
+            compiled = append(compiled, result)
+        }
     }
 }

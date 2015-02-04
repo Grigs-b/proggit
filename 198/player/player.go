@@ -92,40 +92,51 @@ func (p *AIPlayer) GetName() string {
 // TODO: Add Sortby length to possible words to make choosing shortest/longest/etc easier
 func (ai *EasyAIPlayer) Play() string {
     choice := ""
-    possible := ai.Words.PossibleWords(ai.Hand)
-    if len(possible) > 0 {
-        choice = possible[0]
-        for _, word := range possible {
-            if len(word) < len(choice) {
-                choice = word
-            }
+    done := make(chan struct{})
+    defer close(done)
+    i := 0
+    for possible := range ai.Words.PossibleWords(done, ai.Hand) {
+        if i == 0 {
+            choice = possible
+        }
+        if len(possible) < len(choice) {
+            choice = possible
         }
     }
     ai.UpdateHand(choice)
     return choice
 }
 
-// TODO: Make Medium choose a normal distribution from sorted.length rather than random
+// TODO: Other AI Improvements, change to try a min/max "target" length to aim for?
+//       Easy AI could be something like: try 2-4 length words, then 5..12 until you find one
+//       Medium could be: try 4-5 length, then 2,3,6..12
+//       Hard: try 12...2
 func (ai *MediumAIPlayer) Play() string {
+
+    done := make(chan struct{})
+    defer close(done)
+    var compiled []string
     choice := ""
-    possible := ai.Words.PossibleWords(ai.Hand)
-    if len(possible) > 0 {
-        val := rand.Intn(len(possible))
-        choice = possible[val]
+    for possible := range ai.Words.PossibleWords(done, ai.Hand) {
+        compiled = append(compiled, possible)
+    }
+
+    if len(compiled) > 0 {
+        val := rand.Intn(len(compiled))
+        choice = compiled[val]
     }
     ai.UpdateHand(choice)
     return choice
 }
 
 func (ai *HardAIPlayer) Play() string {
+
+    done := make(chan struct{})
+    defer close(done)
     choice := ""
-    possible := ai.Words.PossibleWords(ai.Hand)
-    if len(possible) > 0 {
-        choice = possible[0]
-        for _, word := range possible {
-            if len(word) > len(choice) {
-                choice = word
-            }
+    for possible := range ai.Words.PossibleWords(done, ai.Hand) {
+        if len(possible) > len(choice) {
+            choice = possible
         }
     }
     ai.UpdateHand(choice)
