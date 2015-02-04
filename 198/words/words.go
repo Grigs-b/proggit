@@ -19,6 +19,20 @@ type Wordset struct {
     bylength    map[int][]string
 }
 
+type ByLength []string
+
+func (s ByLength) Len() int {
+    return len(s)
+}
+
+func (s ByLength) Swap(i int,j int) {
+    s[i], s[j] = s[j], s[i]
+}
+
+func (s ByLength) Less(i int,j int) bool {
+    return len(s[i]) < len(s[j])
+}
+
 func NewWordset() *Wordset {
     return &Wordset{dictionary: make(map[string]bool), bylength: make(map[int][]string)}
 }
@@ -60,6 +74,7 @@ func (w Wordset) IsValid(word string) bool {
 
 func check(word string, letters []rune) bool {
     var tmp = word
+
     for _, letter := range letters {
         tmp = strings.Replace(tmp, string(letter), "", 1)
         if len(tmp) == 0 {
@@ -77,6 +92,12 @@ func (w Wordset) checkbylength(done <-chan struct{}, length int, letters []rune)
             if check(word, letters) {
                 select {
                 case result <- word:
+                    // Design Note: I could cut runtime roughly in half by adding
+                    //  a return statement here, which would stop execution at the first
+                    //  word of len(length) found. I choose not to in this case as
+                    //  I wanted to find all words we can match and the game is responsive
+                    //  enough in it's current state. But this is an easy optimization to make
+                    //  if I wanted as much speed as possible
                 case <-done:
                     return
                 }

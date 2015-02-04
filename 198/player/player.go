@@ -107,7 +107,10 @@ func (ai *EasyAIPlayer) Play() string {
     return choice
 }
 
-// TODO: Make Medium choose a normal distribution from sorted.length rather than random
+// TODO: Other AI Improvements, change to try a min/max "target" length to aim for?
+//       Easy AI could be something like: try 2-4 length words, then 5..12 until you find one
+//       Medium could be: try 4-5 length, then 2,3,6..12
+//       Hard: try 12...2
 func (ai *MediumAIPlayer) Play() string {
 
     done := make(chan struct{})

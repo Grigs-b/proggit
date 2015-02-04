@@ -1,7 +1,7 @@
 package words
 
 import (
-    "fmt"
+    "sort"
     "reflect"
     "testing"
 )
@@ -11,6 +11,24 @@ func TestEqualWordsTie(t *testing.T) {
     word := "because"
     if result := ScoreWords(word, word); !reflect.DeepEqual(result, want) {
         t.Errorf("scoreWords(%s, %s) = %+v, want %+v", word, word, result, want)
+    }
+}
+
+func TestPlayerOneEmptyPlayerTwoScoresFullLengthIsNegative(t *testing.T) {
+    want := -3
+    playerOne := ""
+    playerTwo := "win"
+    if result := ScoreWords(playerOne, playerTwo); !reflect.DeepEqual(result, want) {
+        t.Errorf("scoreWords(%s, %s) = %+v, want %+v", playerOne, playerTwo, result, want)
+    }
+}
+
+func TestPlayerTwoEmptyPlayerOneScoresFullLength(t *testing.T) {
+    want := 3
+    playerOne := "won"
+    playerTwo := ""
+    if result := ScoreWords(playerOne, playerTwo); !reflect.DeepEqual(result, want) {
+        t.Errorf("scoreWords(%s, %s) = %+v, want %+v", playerOne, playerTwo, result, want)
     }
 }
 
@@ -78,6 +96,7 @@ func TestPossibleWordsFindsCorrectSetGoldenPath(t *testing.T) {
     for entry := range w.PossibleWords(done, hand) {
         result = append(result, entry)
     }
+    sort.Sort(ByLength(result))
     if !reflect.DeepEqual(result, want) {
         t.Errorf("PossibleWords(%s) = %+v, want %+v", hand, result, want)
     }
@@ -114,9 +133,8 @@ func TestPossibleWordsNonePossibleReturnsEmptyList(t *testing.T) {
         t.Errorf("PossibleWords(%s) = %+v, want %+v", hand, result, want)
     }
 }
-//Runs: 126435556 ns/op, 145709640 ns/op, 127772211 ns/op
-// Dictionary size: 172820
-// ~740ns per word in dictionary
+
+// Easy optimization possible, check "checkbylength" function for explaination
 func BenchmarkPossibleWords(b *testing.B) {
     w := NewWordset()
     w.LoadWordsFromFile("../data/wordset.txt")
@@ -128,6 +146,5 @@ func BenchmarkPossibleWords(b *testing.B) {
         for result := range w.PossibleWords(done, hand) {
             compiled = append(compiled, result)
         }
-        fmt.Println(len(compiled))
     }
 }
