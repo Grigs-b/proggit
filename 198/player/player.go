@@ -10,7 +10,7 @@ import (
 )
 
 const HAND_SIZE int = 12
-var letters = []rune("abcdefghijklmnopqrstuvwxyz")
+
 
 
 type Player interface {
@@ -25,7 +25,7 @@ type Player interface {
 
 type AnyPlayer struct {
     Score   int
-    Hand    []rune
+    Hand    words.LetterMap
     Name    string
     Words   words.WordList
 }
@@ -51,7 +51,6 @@ type HardAIPlayer struct {
     AIPlayer
 }
 
-
 func (p *AnyPlayer) GetScore() int {
     return p.Score
 }
@@ -61,7 +60,13 @@ func (p *AnyPlayer) AddPoints(points int) {
 }
 
 func (p *AnyPlayer) GetHand() []rune {
-    return p.Hand
+    var hand []rune
+    for letter, count := range p.Hand {
+        for i := 0; i < count; i++ {
+            hand = append(hand, letter)
+        }
+    }
+    return hand
 }
 
 func (p *AnyPlayer) GetName() string {
@@ -72,16 +77,19 @@ func (p *AnyPlayer) SetName(name string) {
     p.Name = name
 }
 
-func getLetter() rune {
-    // simple random for right now
-    return letters[rand.Intn(len(letters))]
-}
 
 // TODO: Different letter distributions? Scrabble frequency?
 // TODO: Ensure player has vowels so they are able to make words
 func (p *AnyPlayer) FillHand() {
-    for i := len(p.Hand); i < HAND_SIZE; i++ {
-        p.Hand = append(p.Hand, getLetter())
+    if p.Hand == nil {
+        p.Hand = words.NewLetterMap("")
+    }
+    sum := 0
+    for _, count := range p.Hand {
+        sum += count
+    }
+    for i := sum; i < HAND_SIZE; i++ {
+        p.Hand[words.GetLetter()]++
     }
 }
 
@@ -175,22 +183,18 @@ func (human *HumanPlayer) Play() string {
 }
 
 func (p *AnyPlayer) UpdateHand(word string) bool {
-    hand := make([]rune, len(p.Hand))
-    copy(hand, p.Hand)
-    for _, letter := range word {
-        index := -1
-        for idx, handletter := range hand {
-            if letter == handletter {
-                index = idx
-                break
-            }
-        }
-        if index >= 0 {
-            hand = append(hand[:index], hand[index+1:]...)
-        } else {
+    tocheck := words.NewLetterMap(word)
+
+    for letter, count := range tocheck {
+        if p.Hand[letter] < count {
             return false
         }
     }
-    p.Hand = hand
+    // going through twice so we don't partially remove from hand on first pass
+    //  possible to condense?
+    for letter, count := range tocheck {
+        p.Hand[letter] -= count
+    }
+
     return true
 }

@@ -6,16 +6,21 @@ import (
     "sync"
     "strings"
     "bufio"
+    "math/rand"
 )
+
+var Letters = []rune("abcdefghijklmnopqrstuvwxyz")
 
 type WordList interface {
     IsValid(word string) bool
-    PossibleWords(done <-chan struct{}, letters []rune) <-chan string
+    PossibleWords(done <-chan struct{}, letters LetterMap) <-chan string
     AddWord(string)
 }
 
+type LetterMap map[rune]int
+
 type Wordset struct {
-    dictionary  map[string]bool
+    dictionary  map[string]LetterMap
     bylength    map[int][]string
 }
 
@@ -34,7 +39,7 @@ func (s ByLength) Less(i int,j int) bool {
 }
 
 func NewWordset() *Wordset {
-    return &Wordset{dictionary: make(map[string]bool), bylength: make(map[int][]string)}
+    return &Wordset{dictionary: make(map[string]LetterMap), bylength: make(map[int][]string)}
 }
 
 func (w *Wordset) LoadWordsFromFile(path string) {
@@ -62,29 +67,36 @@ func (w *Wordset) LoadWordsFromFile(path string) {
 }
 
 
+func NewLetterMap(word string) LetterMap {
+    lmap := make(LetterMap)
+    for _, letter := range word {
+        lmap[letter]++
+    }
+    return lmap
+}
+
 func (w *Wordset) AddWord(word string) {
-    w.dictionary[word]=true
+    w.dictionary[word]=NewLetterMap(word)
     w.bylength[len(word)] = append(w.bylength[len(word)], word)
 }
 
 
 func (w Wordset) IsValid(word string) bool {
-    return w.dictionary[word]
+    return len(w.dictionary[word]) > 0
 }
 
-func check(word string, letters []rune) bool {
-    var tmp = word
+func check(word string, lmap LetterMap) bool {
+    tmp := NewLetterMap(word)
 
-    for _, letter := range letters {
-        tmp = strings.Replace(tmp, string(letter), "", 1)
-        if len(tmp) == 0 {
-            return true
+    for letter, count := range tmp {
+        if lmap[letter] != count {
+            return false
         }
     }
-    return false
+    return true
 }
 
-func (w Wordset) checkbylength(done <-chan struct{}, length int, letters []rune) <-chan string {
+func (w Wordset) checkbylength(done <-chan struct{}, length int, letters LetterMap) <-chan string {
     result := make(chan string)
     go func() {
         defer close(result)
@@ -138,7 +150,7 @@ func merge(done <-chan struct{}, checks ...<-chan string) <-chan string {
     return out
 }
 
-func (w *Wordset) PossibleWords(done <-chan struct{}, letters []rune) <-chan string {
+func (w *Wordset) PossibleWords(done <-chan struct{}, letters LetterMap) <-chan string {
 
     result := make(chan string)
     go func() {
@@ -164,6 +176,10 @@ func (w *Wordset) PossibleWords(done <-chan struct{}, letters []rune) <-chan str
     return result
 }
 
+func GetLetter() rune {
+    // simple random for right now
+    return Letters[rand.Intn(len(Letters))]
+}
 
 func ScoreWords(wordOne string, wordTwo string) int {
     // returns positive integer if word one wins, negative integer if word two wins

@@ -91,7 +91,7 @@ func TestPossibleWordsFindsCorrectSetGoldenPath(t *testing.T) {
     w.AddWord("truth")
     w.AddWord("back")
     w.AddWord("front")
-    hand := []rune{'a', 'b', 'c','k'}
+    hand := NewLetterMap("abck")
     done := make(chan struct{})
     for entry := range w.PossibleWords(done, hand) {
         result = append(result, entry)
@@ -102,6 +102,7 @@ func TestPossibleWordsFindsCorrectSetGoldenPath(t *testing.T) {
     }
 }
 
+
 func TestPossibleWordsMultipleLettersDontCount(t *testing.T) {
     var want, result []string
 
@@ -110,7 +111,7 @@ func TestPossibleWordsMultipleLettersDontCount(t *testing.T) {
     w.AddWord("truth")
     w.AddWord("back")
     w.AddWord("front")
-    hand := []rune{'a', 'k', 'c','k'}
+    hand := NewLetterMap("akkc")
     done := make(chan struct{})
     for entry := range w.PossibleWords(done, hand) {
         result = append(result, entry)
@@ -124,7 +125,7 @@ func TestPossibleWordsNonePossibleReturnsEmptyList(t *testing.T) {
     var want, result []string
 
     w := NewWordset()
-    hand := []rune{'a', 'b', 'c','k'}
+    hand := NewLetterMap("abkc")
     done := make(chan struct{})
     for entry := range w.PossibleWords(done, hand) {
         result = append(result, entry)
@@ -138,7 +139,7 @@ func TestPossibleWordsNonePossibleReturnsEmptyList(t *testing.T) {
 func BenchmarkPossibleWords(b *testing.B) {
     w := NewWordset()
     w.LoadWordsFromFile("../data/wordset.txt")
-    hand := []rune{'a', 'b', 'c','d', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l'}
+    hand := NewLetterMap("abcdefghijkl")
     done := make(chan struct{})
     b.ResetTimer()
     for i := 0; i < b.N; i++ {
