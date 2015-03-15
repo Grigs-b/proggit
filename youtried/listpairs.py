@@ -10,9 +10,6 @@ output: 6, -5
 #sorted [-12, -10, -5, -2, 6, 8, 14]
 import sys
 
-def magnitude(a, b):
-    return abs(abs(a) - abs(b))
-
 def list_pairs(dataset):
     dataset.sort()
     end = len(dataset) - 1
